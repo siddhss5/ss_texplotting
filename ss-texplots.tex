@@ -1,0 +1,108 @@
+\usepackage{pgfplots,pgfplotstable}
+\usepgfplotslibrary{colorbrewer}
+\usetikzlibrary{intersections}
+
+
+\pgfplotsset{compat=1.13}
+
+\pgfplotsset{
+  tick label style = {font=\footnotesize},
+  every axis label = {font=\footnotesize},
+  legend style = {font=\footnotesize},
+  label style = {font=\footnotesize}
+}
+
+\pgfplotsset{
+   sidd ybar/.style={
+      ybar,
+      major tick style={draw=none},
+      xtick=\empty,
+      xtick align=inside,
+      ytick align=inside,
+      ylabel shift=-5pt,
+      ymin=0,
+	    axis line style={draw=black!20!white},
+      ymajorgrids,
+      bar width=10pt,
+  	  bar shift=0pt,
+  	  enlarge x limits={abs=7pt},
+  	  x = 14pt,
+      legend columns=-1,
+	    legend style={
+		    at={(0.5,1)},anchor=center, draw=black!20!white,
+		    /tikz/every even column/.append style={column sep=5pt}
+		  },
+      legend image code/.code={%
+    	 \draw[#1] (0cm,-0.1cm) rectangle (0.3cm,0.1cm);
+    	},
+      cycle multiindex* list={
+        Set1-9 \nextlist
+        fill={.} \nextlist
+        draw=none
+    }
+   }
+}
+
+\pgfplotscreateplotcyclelist{ss_marker}{
+      every mark/.append style={scale=1.5pt,fill=white}, mark=*\\
+}
+
+\pgfplotsset{
+  sidd errorbars/.style={
+    /pgfplots/error bars/error bar style={draw={.!75!black}, thick},
+    /pgfplots/error bars/error mark options={{.!75!black},rotate=90, thick}
+  }
+}
+
+\pgfplotsset{
+   sidd plot/.style={
+    thick,
+    separate axis lines,
+    axis x line*=bottom,
+    axis y line*=left,
+    axis line style={draw=black!20!white},
+    enlarge x limits=false,
+    enlarge y limits=false,
+    x axis shift down=10pt,
+    y axis shift left=10pt,
+    max space between ticks=30pt,
+    width=\textwidth,
+    height=0.75\textwidth,  
+    xlabel shift=-5pt,
+    y label style={at={(rel axis cs:-0.25,1.1)}, rotate around={-90:(rel axis cs:0,0)},anchor=west},
+    cycle multiindex* list={
+      Set1-9 \nextlist
+      ss_marker \nextlist
+    }
+   }
+}
+
+% Helper functions
+
+\pgfplotsset{
+    select row/.style={
+        x filter/.code={\ifnum\coordindex=#1\else\def\pgfmathresult{}\fi}
+    }
+}
+
+\pgfplotsset{
+    discard if not/.style 2 args={
+        x filter/.code={
+            \edef\tempa{\thisrow{#1}}
+            \edef\tempb{#2}
+            \ifx\tempa\tempb
+            \else
+                \def\pgfmathresult{inf}
+            \fi
+        }
+    }
+}
+
+\pgfkeys{/pgfplots/x axis shift down/.style={
+    x axis line style={yshift=-#1},
+    xtick style={yshift=-#1},
+    xticklabel shift={#1}}}
+\pgfkeys{/pgfplots/y axis shift left/.style={
+    y axis line style={xshift=-#1},
+    ytick style={xshift=-#1},
+    yticklabel shift={#1}}}
