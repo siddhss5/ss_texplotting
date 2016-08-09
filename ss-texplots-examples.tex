@@ -1,0 +1,165 @@
+\documentclass[12pt]{article}
+\usepackage[font=footnotesize]{caption} 
+\usepackage[font=footnotesize]{subcaption}
+\usepackage[margin=1in]{geometry}
+
+
+\input{ss-texplots}
+
+\pgfplotstableread{
+Criterion   Rapperswil  erap	Palermo Jeddah 
+A       	3620        500		15749   42754
+B      		2739        400		15109   42240
+C      		3710        350		16146   40533
+D           714         160		9306    28919
+E        	2997       	900		6840  	11614
+F      		1589        440		4992  	11786
+G       	2122        220		11154   28747
+}\datatable
+
+\pgfplotstableread{
+Time	J1		J2		J3
+0		1.1		2.1		0.3
+1		1.3		2.3		0.8
+1.5		3.4		4.2		4.3
+2.4		6.1 	3.2		5.4
+2.9		4.3 	7.3		3.3
+6.3		7.2 	9.1		2.1
+}\timetable
+
+
+
+\title{Sidd's PGFPlots examples}
+\author{Siddhartha S.~Srinivasa}
+\begin{document}
+\maketitle
+
+\begin{figure}[t!]
+\centering
+\begin{subfigure}[b]{0.3\textwidth}
+\centering
+\begin{tikzpicture}
+\begin{axis}[
+	sidd ybar,
+	scaled y ticks=base 10:-3,
+	ylabel={Wattage (kWh)},
+	xtick=data,
+	xticklabels from table={\datatable}{Criterion}
+	]
+	\addplot table [x expr=\coordindex, y=Jeddah] {\datatable};
+	\addplot plot  [select row={4}] table [x expr=\coordindex, y=Jeddah] {\datatable};
+\end{axis}
+\end{tikzpicture}
+\caption{Vanilla barplot}
+\label{fig:ybar-vanilla}
+\end{subfigure}
+\begin{subfigure}[b]{0.3\textwidth}
+\centering
+\begin{tikzpicture}
+	\pgfplotstablegetrowsof{\datatable} 
+	\pgfmathtruncatemacro{\rows}{\pgfplotsretval} 
+	\pgfmathtruncatemacro{\lastrow}{\rows-1}
+\begin{axis}[
+	sidd ybar,
+	scaled y ticks=base 10:-3,
+	ylabel={Wattage (kWh)},
+	xtick=data,
+	xticklabels from table={\datatable}{Criterion},
+	xtick={0,...,\lastrow},
+	legend columns=1,
+	legend style={
+		at={(1.05,0)},anchor=south west,
+		/tikz/every even column/.append style={column sep=5pt}
+		},
+	]
+	\pgfplotsinvokeforeach  {0,...,\lastrow}{
+    	\addplot plot [sidd errorbars, error bars/.cd, y dir=both, y explicit]
+    	table [ x expr=\coordindex, select row=#1, y=Rapperswil, y error = erap] {\datatable};
+    	\addlegendentry {\pgfplotstablegetelem{#1}{Criterion}\of\datatable \pgfplotsretval};
+    }
+\end{axis}
+\end{tikzpicture}
+\caption{Qualitative coloring}
+\label{fig:ybar-qualitative}
+\end{subfigure}
+\begin{subfigure}[b]{0.35\textwidth}
+\centering
+\begin{tikzpicture}
+\begin{axis}[
+	ybar stacked,
+	sidd ybar,
+	scaled y ticks=base 10:-3,
+	ylabel={Wattage (kWh)},
+	xtick=data,
+	xticklabels from table={\datatable}{Criterion}
+	]
+	\pgfplotstablegetcolumnnamebyindex{1}\of{\datatable}\to{\colname} %Autoget column from index
+	\addplot table [ x expr=\coordindex, y=\colname] {\datatable};
+	\addplot table [ x expr=\coordindex, y=Palermo] {\datatable};
+	\addplot table [ x expr=\coordindex, y=Jeddah] {\datatable};
+\end{axis}
+\end{tikzpicture}
+\caption{Stacked barplot}
+\label{fig:ybar-stacked}
+\end{subfigure}
+\caption{Barplots with Colorbrewer colors.}
+\label{fig:ybar}
+\end{figure}
+
+\begin{figure}[t!]
+\centering
+\begin{subfigure}[b]{0.3\textwidth}
+\centering
+\begin{tikzpicture}
+\begin{axis}[
+	sidd plot,
+    xlabel={Time (s.)},
+    ylabel={Torque (N)},
+    ]
+	\addplot table [ x=Time, y=J1] {\timetable};
+\end{axis}
+\end{tikzpicture}
+\caption{Vanilla XY plot}
+\label{fig:xy-vanilla}
+\end{subfigure}
+\begin{subfigure}[b]{0.3\textwidth}
+\centering
+\begin{tikzpicture}
+\begin{axis}[
+	sidd plot,
+    xlabel={Time (s.)},
+    ylabel={Torque (N)},
+    clip=false
+    ]
+    \pgfplotstablegetcolumnnamebyindex{0}\of{\timetable}\to{\xaxis}
+    \pgfplotstablegetcolsof{\datatable} 
+	\pgfmathtruncatemacro{\tcols}{\pgfplotsretval} 
+	\pgfmathtruncatemacro{\cols}{\tcols-2} 
+	\pgfplotstablegetrowsof{\timetable} 
+	\pgfmathtruncatemacro{\rows}{\pgfplotsretval} 
+	\pgfmathtruncatemacro{\lastrow}{\rows-1}
+	\pgfplotstablegetelem{\lastrow}{\xaxis}\of{\timetable}     
+	\pgfmathsetmacro{\xn}{\pgfplotsretval}
+	\pgfplotsinvokeforeach{1,...,\cols}{
+		\pgfplotstablegetcolumnnamebyindex{#1}\of{\timetable}\to{\colname}
+		\pgfplotstablegetelem{\lastrow}{\colname}\of{\timetable}     
+	    \pgfmathsetmacro{\yn}{\pgfplotsretval}
+	        \edef\doplot{
+        		\noexpand\addplot
+					table [ x=\xaxis, y=\colname] {\noexpand\timetable}
+					node[anchor=west] at (axis cs:\xn,\yn) {\noexpand\footnotesize{\colname}};
+					}
+		\doplot
+	}
+\end{axis}
+\end{tikzpicture}
+\caption{Multi XY plot}
+\label{fig:ybar-vanilla}
+\end{subfigure}
+
+\caption{XY Plots}
+\label{fig:xyplots}
+\end{figure}
+
+
+\end{document}
